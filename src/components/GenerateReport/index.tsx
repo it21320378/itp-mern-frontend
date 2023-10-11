@@ -370,7 +370,7 @@ export const ReceivedTicketsTableForReportGeneration = () => {
 
         {/* Ticket Table */}
         <ScrollArea mt={10} h={330} w={"100%"}>
-          <Table horizontalSpacing={14} highlightOnHover>
+          <Table horizontalSpacing={10.5} highlightOnHover>
             <thead>
               <tr style={{ backgroundColor: "#f1f1f1" }}>
                 <th>TICKET STATUS</th>

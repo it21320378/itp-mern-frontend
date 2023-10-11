@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
         paddingTop: "5px",
         paddingBottom: "3px",
         textAlign: "center",
-        fontSize: 12,
+        fontSize: 11,
     },
     headerFont: {
         margin: "auto",
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     logo: {
         margin: "auto",
         marginBottom: "0px",
-        width: "100px",
+        width: "80px",
         height: "80px",
         marginTop: "20px",
     },
@@ -88,6 +88,14 @@ const styles = StyleSheet.create({
         fontSize: "15px",
         position: "absolute",
         bottom: "5px",
+        width: "100%",
+        textAlign: "center",
+    },
+    pageNo2: {
+        color: "#babec2",
+        fontSize: "15px",
+        position: "absolute",
+        bottom: "10px",
         width: "100%",
         textAlign: "center",
     },
@@ -201,6 +209,7 @@ export const AllTicketsPDF = ({ data }: any) => {
                             }
                             fixed
                         />
+                        
                     </View>
                 </Page>
             </Document>

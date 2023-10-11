@@ -1,8 +1,10 @@
 //User - below part of support service homepage - //My ticket table of user Dboard //select 1 ticket, open it on floating
+
 import {
   Badge,
   Box,
   Center,
+  Divider,
   Group,
   Modal,
   ScrollArea,
@@ -17,13 +19,14 @@ import { IconSearch, IconTicketOff } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import TicketAPI from "../../API/tickets";
+import { DateInput } from "@mantine/dates";
 
 const RaisedTicketTable = () => {
   // get user details from the localstorage
   const user = JSON.parse(localStorage.getItem("user")!!);
 
   // ticket table tickets filter by status
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("ALL");
 
   // user react query to fetch the the raised ticket data
   const {
@@ -37,6 +40,9 @@ const RaisedTicketTable = () => {
   // open ticket window
   const [ticketOpened, setTicketOpened] = useState(false);
 
+  // search query state
+  const [search, setSearch] = useState("");
+
   // specific ticket details
   const [ticketInfo, setTicketInfo] = useState({
     ticketId: "",
@@ -46,66 +52,31 @@ const RaisedTicketTable = () => {
     subject: "",
     message: "",
     status: "",
+    response: "",
   });
+
+  // sort by
+  const [dateSort, setDateSort] = useState<Date>();
+
+  // format date
+  const generateFormatDate = (dbDate: any) => {
+    const sortDate = new Date(dateSort!!).toLocaleDateString("en-CA");
+    const ticketDbDate = new Date(dbDate).toLocaleDateString("en-CA");
+
+    return sortDate === ticketDbDate;
+  };
+
   // generate tickets table body
   const rows =
     data.length > 0 ? (
-      data.map((ticket: any) => (
-        <tr
-          key={ticket._id}
-          onClick={() => {
-            setTicketInfo({
-              ticketId: ticket.ticketId,
-              date: new Date(ticket.date).toLocaleDateString("en-CA"),
-              time: ticket.time,
-              category: ticket.category,
-              subject: ticket.subject,
-              message: ticket.message,
-              status: ticket.status,
-            });
-
-            // open ticket modal
-            setTicketOpened(true);
-          }}
-          style={{cursor : "pointer"}}
-        >
-          <td>
-            {
-              <Badge
-                color={ticket.status === "COMPLETE" ? "teal" : "orange"}
-                variant="light"
-              >
-                {ticket.status}
-              </Badge>
-            }
-          </td>
-          <td>{ticket.ticketId}</td>
-          <td>{new Date(ticket.date).toLocaleDateString("en-CA")}</td>
-          <td>{ticket.time}</td>
-          <td>{ticket.category}</td>
-          <td>{ticket.subject}</td>
-        </tr>
-      ))
-    ) : (
-      <tr>
-        <td colSpan={6}>
-          <>
-            <Center mt={60}>
-              <IconTicketOff size={100} color="gray" opacity={0.2} />
-            </Center>
-            <Text align="center" weight={"bold"} size={30} pb={70}>
-              You haven't raised ticket yet!
-            </Text>
-          </>
-        </td>
-      </tr>
-    );
-
-  // filtering pending tickets only
-  const pendingTickets =
-    data.length > 0 ? (
       data.map((ticket: any) => {
-        if (ticket.status === "PENDING") {
+        if (
+          ((search.length === 0  && status.toLowerCase() === "all"))||
+          (search.length > 0  && ticket.ticketId.toLowerCase().includes(search.toLowerCase())) ||
+          (search.length > 0 && ticket.category.toLowerCase().includes(search.toLowerCase())) ||
+          (search.length === 0 && ticket.status.toLowerCase() === status.toLowerCase())
+
+        ) {
           return (
             <tr
               key={ticket._id}
@@ -118,15 +89,20 @@ const RaisedTicketTable = () => {
                   subject: ticket.subject,
                   message: ticket.message,
                   status: ticket.status,
+                  response: ticket.response,
                 });
 
                 // open ticket modal
                 setTicketOpened(true);
               }}
+              style={{ cursor: "pointer" }}
             >
               <td>
                 {
-                  <Badge color={"orange"} variant="light">
+                  <Badge
+                    color={ticket.status === "COMPLETE" ? "teal" : "orange"}
+                    variant="light"
+                  >
                     {ticket.status}
                   </Badge>
                 }
@@ -154,12 +130,14 @@ const RaisedTicketTable = () => {
         </td>
       </tr>
     );
-// end of filtering pending tickets only
-  // filtering successing tickets only
-  const completeTickets =
+
+    const sortByDate =
     data.length > 0 ? (
       data.map((ticket: any) => {
-        if (ticket.status === "COMPLETE") {
+      
+        if (
+          ((dateSort !== null || dateSort !== undefined) && generateFormatDate(ticket.date))
+        ) {
           return (
             <tr
               key={ticket._id}
@@ -172,15 +150,20 @@ const RaisedTicketTable = () => {
                   subject: ticket.subject,
                   message: ticket.message,
                   status: ticket.status,
+                  response: ticket.response,
                 });
 
                 // open ticket modal
                 setTicketOpened(true);
               }}
+              style={{ cursor: "pointer" }}
             >
               <td>
                 {
-                  <Badge color={"teal"} variant="light">
+                  <Badge
+                    color={ticket.status === "COMPLETE" ? "teal" : "orange"}
+                    variant="light"
+                  >
                     {ticket.status}
                   </Badge>
                 }
@@ -208,13 +191,10 @@ const RaisedTicketTable = () => {
         </td>
       </tr>
     );
-//end of filtering successing tickets only
-
   return (
     <>
       {/* Ticket Modal */}
       <Modal
-//when click on 1 ticket this table open
         opened={ticketOpened}
         onClose={() => setTicketOpened(false)}
         size={"50%"}
@@ -222,7 +202,6 @@ const RaisedTicketTable = () => {
         <Modal.Header>
           <Text weight={"bold"} size={30}>
             Ticket Details
-{/* Ticket Details Table */}
           </Text>
           <Badge
             size="lg"
@@ -269,6 +248,20 @@ const RaisedTicketTable = () => {
             readOnly
             value={ticketInfo.message}
           />
+          {/* Admin response */}
+          <Divider mb={-10} mt={30} />
+          <Textarea
+            mt={20}
+            mb={10}
+            minRows={5}
+            maxRows={10}
+            label={"Response"}
+            readOnly
+            value={ticketInfo.response}
+            placeholder={
+              "Here will be display admin response for the ticket. If you see this message, That means admin have not replied to your message yet!"
+            }
+          />
         </Modal.Body>
       </Modal>
       <Box
@@ -305,6 +298,7 @@ const RaisedTicketTable = () => {
                 radius={30}
                 size="xs"
                 placeholder="Search..."
+                onChange={(e) => setSearch(e.target.value)}
               />
               {/* Raised ticket table */}
               <Select
@@ -315,20 +309,18 @@ const RaisedTicketTable = () => {
                 ]}
                 placeholder="Ticket Status"
                 size="xs"
-                defaultChecked
+                value={status}
                 onChange={(e) => setStatus(e!!)}
               />
             </Group>
             <Group position="right">
               <Text size={15}>Sort By:</Text>
-              <Select
-                data={[
-                  { label: "TIME", value: "TIME" },
-                  { label: "DATE", value: "DATE" },
-                ]}
+              <DateInput
+                clearable
                 placeholder="Raised Date"
+                valueFormat="YYYY MM DD"
                 size="xs"
-                value={status}
+                onChange={(e) => setDateSort(e!!)}
               />
             </Group>
           </Group>
@@ -336,7 +328,7 @@ const RaisedTicketTable = () => {
 
         {/* Ticket Table */}
         <ScrollArea mt={10} h={330} w={"100%"}>
-          <Table horizontalSpacing={10} highlightOnHover>
+          <Table horizontalSpacing={7.5} highlightOnHover>
             <thead>
               <tr style={{ backgroundColor: "#f1f1f1" }}>
                 <th>TICKET STATUS</th>
@@ -347,13 +339,7 @@ const RaisedTicketTable = () => {
                 <th>ISSUE SUBJECT</th>
               </tr>
             </thead>
-            <tbody>
-              {status === "COMPLETE"
-                ? completeTickets
-                : status === "PENDING"
-                ? pendingTickets
-                : rows}
-            </tbody>
+            <tbody>{dateSort ? sortByDate : rows}</tbody>
           </Table>
         </ScrollArea>
       </Box>
