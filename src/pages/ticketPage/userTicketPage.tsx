@@ -1,4 +1,4 @@
-import Footer from "../../components/footer";
+import Footer from "../../components/client_footer";
 import UserHeader from "../../components/userHeader/userHeader";
 
 const UserTicketPage = () =>{
